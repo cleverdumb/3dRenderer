@@ -1,0 +1,108 @@
+<html>
+    <head>
+        <title>AABB 3D</title>
+    </head>
+    <body>
+        <canvas id='cvs'></canvas>
+        <input type='range' min='-100' max='100' id='xSlide'>
+        <input type='range' min='-30' max='30' id='ySlide'>
+        <input type='range' min='-100' max='100' id='zSlide'>
+        <script>
+            const cvs = document.getElementById('cvs');
+            const ctx = cvs.getContext('2d');
+
+            const cw = 700;
+            const ch = 700;
+
+            cvs.width = cw;
+            cvs.height = ch;
+            cvs.style.border = '1px solid black';
+
+            let scrY = 20;
+
+            let scrX = 100;
+            let scrZ = 100;
+
+            let c = ['red', 'green', 'blue', 'black', 'brown', 'purple', 'yellow', 'orange', 'cyan', 'pink']
+
+            let dx = 0, dy = 0, dz = 0;
+
+            document.getElementById('xSlide').oninput = ()=>{
+                dx = parseInt(document.getElementById('xSlide').value);
+                render();
+            }
+
+            document.getElementById('ySlide').oninput = ()=>{
+                dy = parseInt(document.getElementById('ySlide').value);
+                render();
+            }
+            
+            document.getElementById('zSlide').oninput = ()=>{
+                dz = parseInt(document.getElementById('zSlide').value);
+                render();
+            }
+
+            let tri = [
+                // [[-50, 50, -50], [50, 50, -50], [-50, 50, 50]],
+                // [[-50, 50, 50], [50, 50, 50], [50, 50, -50]],     // front
+
+                [[-50, 50, -50], [-50, 150, -50], [50, 50, -50]],
+                [[-50, 150, -50], [50, 150, -50], [50, 50, -50]], // bottom
+
+                [[-50, 50, -50], [-50, 50, 50], [-50, 150, -50]],
+                [[-50, 50, 50], [-50, 150, 50], [-50, 150, -50]], // left
+
+                [[-50, 150, -50], [-50, 150, 50], [50, 150, -50]],
+                [[-50, 150, 50], [50, 150, 50], [50, 150, -50]],  // back
+
+                [[-50, 50, 50], [-50, 150, 50], [50, 50, 50]],
+                [[50, 50, 50], [-50, 150, 50], [50, 150, 50]],     // top
+
+                [[50, 150, 50], [50, 50, 50], [50, 50, -50]],
+                [[50, 150, 50], [50, 50, -50], [50, 150, -50]]      // right
+            ]
+
+            let depths = tri.map(t=>{
+                let sum = 0;
+                t.forEach(p => {
+                    sum += Math.hypot(p[0]+dx, p[1]+dy, p[2]+dz);
+                })
+                return [...t, sum/3];
+            })
+
+            depths.sort((a, b)=>{
+                return b[3]-a[3];
+            })
+
+            console.log(depths);
+
+            function render() {
+                ctx.clearRect(0, 0, cw, ch);
+                depths.forEach((t, ti)=>{
+                    let proj = [];
+                    t.forEach((p, i)=>{
+                        if (i < 3) {
+                            // console.log((scrX/2 + (p[0]-30) * scrY / p[1]) / scrX * cw, (scrZ/2 + p[2] * scrY / p[1]) / scrZ * ch);
+                            // ctx.fillRect((scrX/2 + p[0] * scrY / p[1]) / scrX * cw, ch - (scrZ/2 + p[2] * scrY / p[1]) / scrZ * ch, 5, 5);
+                            proj.push([(scrX/2 + (p[0]+dx) * scrY / (p[1]+dy)) / scrX * cw, ch - (scrZ/2 + (p[2]+dz) * scrY / (p[1]+dy)) / scrZ * ch])
+                        }
+                    })
+                    ctx.beginPath();
+                    // ctx.fillStyle = c[Math.floor((ti)/2)]
+                    ctx.fillStyle = c[ti]
+                    // console.log(c[Math.floor((ti)/2)])
+                    ctx.strokeStyle = 'black';
+                    ctx.moveTo(proj[0][0], proj[0][1]);
+                    ctx.lineTo(proj[1][0], proj[1][1]);
+                    ctx.lineTo(proj[2][0], proj[2][1]);
+                    ctx.lineTo(proj[0][0], proj[0][1]);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.closePath();
+                })
+            }
+
+            render();
+        </script>
+    </body>
+</html>
