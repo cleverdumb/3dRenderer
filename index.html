@@ -4,9 +4,11 @@
     </head>
     <body>
         <canvas id='cvs'></canvas>
-        <input type='range' min='-100' max='100' id='xSlide'>
-        <input type='range' min='-30' max='30' id='ySlide'>
-        <input type='range' min='-100' max='100' id='zSlide'>
+        <br>
+        <input type='range' min='-400' max='400' id='xSlide' step='2'><span id='xVal'>X: 0</span><br>
+        <input type='range' min='0' max='100' id='ySlide'><span id='yVal'>Y: 0</span><br>
+        <input type='range' min='-400' max='400' id='zSlide' step='2'><span id='zVal'>Z: 0</span><br>
+        FOV<input type='range' min='100' max='150' id='fovSlide'>
         <script>
             const cvs = document.getElementById('cvs');
             const ctx = cvs.getContext('2d');
@@ -19,53 +21,159 @@
             cvs.style.border = '1px solid black';
 
             let scrY = 20;
+            let fov = 125;
 
-            let scrX = 100;
-            let scrZ = 100;
+            let scrX = 200;
+            let scrZ = 200;
 
             let c = ['red', 'green', 'blue', 'black', 'brown', 'purple', 'yellow', 'orange', 'cyan', 'pink']
 
-            let dx = 0, dy = 0, dz = 0;
+            let dx = 0, dy = 50, dz = 0;
 
             document.getElementById('xSlide').oninput = ()=>{
                 dx = parseInt(document.getElementById('xSlide').value);
+                document.getElementById('xVal').innerHTML = `X: ${dx}`;
+                tri = cuboidToTri([
+                    [-50 + dx, 50 + dy, 50 + dz],
+                    [50 + dx, 50 + dy, 50 + dz],
+                    [50 + dx, 50 + dy, -50 + dz],
+                    [-50 + dx, 50 + dy, -50 + dz],
+                    [-50 + dx, 150 + dy, 50 + dz],
+                    [50 + dx, 150 + dy, 50 + dz],
+                    [50 + dx, 150 + dy, -50 + dz],
+                    [-50 + dx, 150 + dy, -50 + dz]
+                ])
                 render();
             }
 
             document.getElementById('ySlide').oninput = ()=>{
                 dy = parseInt(document.getElementById('ySlide').value);
+                document.getElementById('yVal').innerHTML = `Y: ${dy}`;
+                tri = cuboidToTri([
+                    [-50 + dx, 50 + dy, 50 + dz],
+                    [50 + dx, 50 + dy, 50 + dz],
+                    [50 + dx, 50 + dy, -50 + dz],
+                    [-50 + dx, 50 + dy, -50 + dz],
+                    [-50 + dx, 150 + dy, 50 + dz],
+                    [50 + dx, 150 + dy, 50 + dz],
+                    [50 + dx, 150 + dy, -50 + dz],
+                    [-50 + dx, 150 + dy, -50 + dz]
+                ])
                 render();
             }
             
             document.getElementById('zSlide').oninput = ()=>{
                 dz = parseInt(document.getElementById('zSlide').value);
+                document.getElementById('zVal').innerHTML = `Z: ${dz}`;
+                tri = cuboidToTri([
+                    [-50 + dx, 50 + dy, 50 + dz],
+                    [50 + dx, 50 + dy, 50 + dz],
+                    [50 + dx, 50 + dy, -50 + dz],
+                    [-50 + dx, 50 + dy, -50 + dz],
+                    [-50 + dx, 150 + dy, 50 + dz],
+                    [50 + dx, 150 + dy, 50 + dz],
+                    [50 + dx, 150 + dy, -50 + dz],
+                    [-50 + dx, 150 + dy, -50 + dz]
+                ])
                 render();
             }
 
-            let tri = [
-                // [[-50, 50, -50], [50, 50, -50], [-50, 50, 50]],
-                // [[-50, 50, 50], [50, 50, 50], [50, 50, -50]],     // front
+            document.getElementById('fovSlide').oninput = ()=>{
+                fov = parseInt(document.getElementById('fovSlide').value);
+                render();
+            }
 
-                [[-50, 50, -50], [-50, 150, -50], [50, 50, -50]],
-                [[-50, 150, -50], [50, 150, -50], [50, 50, -50]], // bottom
+            // p0, p1, p2, p3 one face, clockwise, p4 - p1, p5 - p2, p6 - p3, p7 - p4
+            // triangles: p0 -> p1 -> p2 -> p0
+            // crossProduct: (p0 -> p1) x (p1 -> p2)
 
-                [[-50, 50, -50], [-50, 50, 50], [-50, 150, -50]],
-                [[-50, 50, 50], [-50, 150, 50], [-50, 150, -50]], // left
+            /*
+                4 --------- 5
+              / |         / |
+            0 --------- 1   |
+            |   |       |   |
+            |   7 ------|-- 6
+            | /         | /
+            3 --------- 2
+            */
 
-                [[-50, 150, -50], [-50, 150, 50], [50, 150, -50]],
-                [[-50, 150, 50], [50, 150, 50], [50, 150, -50]],  // back
+            function cuboidToTri(p) {
+                return [
+                    // front 0123
+                    [p[1], p[0], p[3]],
+                    [p[3], p[2], p[1]],
 
-                [[-50, 50, 50], [-50, 150, 50], [50, 50, 50]],
-                [[50, 50, 50], [-50, 150, 50], [50, 150, 50]],     // top
+                    // left 0374
+                    [p[0], p[4], p[7]],
+                    [p[7], p[3], p[0]],
 
-                [[50, 150, 50], [50, 50, 50], [50, 50, -50]],
-                [[50, 150, 50], [50, 50, -50], [50, 150, -50]]      // right
-            ]
+                    // right 1562
+                    [p[5], p[1], p[2]],
+                    [p[2], p[6], p[5]],
+
+                    // back 4567
+                    [p[4], p[5], p[6]],
+                    [p[6], p[7], p[4]],
+
+                    // top 4510
+                    [p[5], p[4], p[0]],
+                    [p[0], p[1], p[5]],
+
+                    // bottom 7623
+                    [p[2], p[3], p[7]],
+                    [p[7], p[6], p[2]]
+                ]
+            }
+
+            let tX = -50, tY = 50, tZ = -50, tXp = 100, tYp = 100, tZp = 100;
+            let tri = cuboidToTri([
+                [tX + dx, tY + dy, tZ + tZp + dz],
+                [tX + tXp + dx, tY + dy, tZ + tZp + dz],
+                [tX + tXp + dx, tY + dy, tZ + dz],
+                [tX + dx, tY + dy, tZ + dz],
+                [tX + dx, tY + tYp + dy, tZ + tZp + dz],
+                [tX + tXp + dx, tY + tYp + dy, tZ + tZp + dz],
+                [tX + tXp + dx, tY + tYp + dy, tZ + dz],
+                [tX + dx, tY + tYp + dy, tZ + dz]
+            ])
+
+            function crossProduct(v1, v2) {
+                return [v1[1]*v2[2] - v1[2]*v2[1], v1[2]*v2[0]-v1[0]*v2[2], v1[0]*v2[1] - v1[1]*v2[0]];
+            }
+
+            function dotProduct(v1, v2) {
+                return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+            }
+
+            function normalise(v) {
+                let mag = Math.hypot(v[0], v[1], v[2]);
+                return [v[0]/mag, v[1]/mag, v[2]/mag];
+            }
+
+            // let tri = [
+            //     // [[-50, 50, -50], [50, 50, -50], [-50, 50, 50]],
+            //     // [[-50, 50, 50], [50, 50, 50], [50, 50, -50]],     // front
+
+            //     [[-50, 50, -50], [-50, 150, -50], [50, 50, -50]],
+            //     [[-50, 150, -50], [50, 150, -50], [50, 50, -50]], // bottom
+
+            //     [[-50, 50, -50], [-50, 50, 50], [-50, 150, -50]],
+            //     [[-50, 50, 50], [-50, 150, 50], [-50, 150, -50]], // left
+
+            //     [[-50, 150, -50], [-50, 150, 50], [50, 150, -50]],
+            //     [[-50, 150, 50], [50, 150, 50], [50, 150, -50]],  // back
+
+            //     [[-50, 50, 50], [-50, 150, 50], [50, 50, 50]],
+            //     [[50, 50, 50], [-50, 150, 50], [50, 150, 50]],     // top
+
+            //     [[50, 150, 50], [50, 50, 50], [50, 50, -50]],
+            //     [[50, 150, 50], [50, 50, -50], [50, 150, -50]]      // right
+            // ]
 
             let depths = tri.map(t=>{
                 let sum = 0;
                 t.forEach(p => {
-                    sum += Math.hypot(p[0]+dx, p[1]+dy, p[2]+dz);
+                    sum += Math.hypot(p[0], p[1], p[2]);
                 })
                 return [...t, sum/3];
             })
@@ -74,17 +182,55 @@
                 return b[3]-a[3];
             })
 
-            console.log(depths);
+            // console.log(depths);
 
             function render() {
+                depths = tri.map(t=>{
+                    let sum = 0;
+                    t.forEach(p => {
+                        sum += Math.hypot(p[0], p[1], p[2]);
+                    })
+                    return [...t, sum/3];
+                })
+
+                depths.sort((a, b)=>{
+                    return b[3]-a[3];
+                })
+                let toRender = [];
+                depths.forEach(t=>{
+                    let a = [t[1][0]-t[0][0], t[1][1]-t[0][1], t[1][2]-t[0][2]];
+                    let b = [t[2][0]-t[1][0], t[2][1]-t[1][1], t[2][2]-t[1][2]];
+
+                    let cross = crossProduct(a, b);
+                    // let crossMag = Math.hypot(cross[0], cross[1], cross[2]);
+                    // console.log(crossMag);
+                    // cross[0] = cross[0] / crossMag;
+                    // cross[1] = cross[1] / crossMag;
+                    // cross[2] = cross[2] / crossMag;
+                    cross = normalise(cross);
+                    console.log(cross);
+
+                    let ref = [-t[0][0], -t[0][1], -t[0][2]];
+                    ref = normalise(ref);
+                    
+                    console.log(ref);
+
+                    console.log(dotProduct(ref, cross));
+                    if (dotProduct(ref, cross) > 0) {
+                        toRender.push(t);
+                    }
+                })
                 ctx.clearRect(0, 0, cw, ch);
-                depths.forEach((t, ti)=>{
+                console.log(toRender);
+                toRender.forEach((t, ti)=>{
                     let proj = [];
                     t.forEach((p, i)=>{
                         if (i < 3) {
-                            // console.log((scrX/2 + (p[0]-30) * scrY / p[1]) / scrX * cw, (scrZ/2 + p[2] * scrY / p[1]) / scrZ * ch);
-                            // ctx.fillRect((scrX/2 + p[0] * scrY / p[1]) / scrX * cw, ch - (scrZ/2 + p[2] * scrY / p[1]) / scrZ * ch, 5, 5);
-                            proj.push([(scrX/2 + (p[0]+dx) * scrY / (p[1]+dy)) / scrX * cw, ch - (scrZ/2 + (p[2]+dz) * scrY / (p[1]+dy)) / scrZ * ch])
+                            // proj.push([(scrX/2 + p[0] * scrY / p[1]) / scrX * cw, ch - (scrZ/2 + p[2] * scrY / p[1]) / scrZ * ch])
+                            proj.push([
+                                (p[0]/p[1]/Math.tan(fov/180*Math.PI)+1) * cw/2,
+                                (1 - p[2]/p[1]/Math.tan(fov/180*Math.PI)) * ch/2
+                            ])
                         }
                     })
                     ctx.beginPath();
