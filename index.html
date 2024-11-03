@@ -339,7 +339,7 @@
                         if (yHori.length <= x - Math.round(left[y])) continue;
 
                         if (yHori[x - Math.round(left[y])] > yBuffer[y + Math.round(a[1])][x]) {
-                            ctx.fillRect(x, Math.round(a[1]) + y, 1, 1);
+                            ctx.fillRect(x, Math.round(a[1]) + y, 1.5, 1.5);
                             yBuffer[y + Math.round(a[1])][x] = yHori[x - Math.round(left[y])];
                         }
                     }
@@ -449,7 +449,7 @@
                 }
             }
 
-            let test = new Cuboid([30, 30, 30], [0, 0, 30], [15, 60, 0]);
+            let test = new Cuboid([30, 30, 30], [0, 0, 30], [15, 60, -30]);
             console.log(Date.now());
             test.render();
             console.log(Date.now());
