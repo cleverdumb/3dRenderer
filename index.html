@@ -5,10 +5,7 @@
     <body>
         <canvas id='cvs'></canvas>
         <br>
-        <input type='range' min='-400' max='400' id='xSlide' step='2'><span id='xVal'>X: 0</span><br>
-        <input type='range' min='0' max='100' id='ySlide'><span id='yVal'>Y: 0</span><br>
-        <input type='range' min='-400' max='400' id='zSlide' step='2'><span id='zVal'>Z: 0</span><br>
-        FOV<input type='range' min='100' max='150' id='fovSlide'>
+        <input id='tempIn' type='range' min='-100' max='100'>
         <script>
             const cvs = document.getElementById('cvs');
             const ctx = cvs.getContext('2d');
@@ -26,7 +23,7 @@
             let scrX = 200;
             let scrZ = 200;
 
-            let c = ['red', 'green', 'blue', 'black', 'brown', 'purple', 'yellow', 'orange', 'cyan', 'pink']
+            // let c = ['red', 'green', 'blue', 'black', 'brown', 'purple', 'yellow', 'orange', 'cyan', 'pink']
 
             let dx = 0, dy = 50, dz = 0;
 
@@ -39,58 +36,21 @@
                 rz: 0
             }
 
-            document.getElementById('xSlide').oninput = ()=>{
-                dx = parseInt(document.getElementById('xSlide').value);
-                document.getElementById('xVal').innerHTML = `X: ${dx}`;
-                tri = cuboidToTri([
-                    [-50 + dx, 50 + dy, 50 + dz],
-                    [50 + dx, 50 + dy, 50 + dz],
-                    [50 + dx, 50 + dy, -50 + dz],
-                    [-50 + dx, 50 + dy, -50 + dz],
-                    [-50 + dx, 150 + dy, 50 + dz],
-                    [50 + dx, 150 + dy, 50 + dz],
-                    [50 + dx, 150 + dy, -50 + dz],
-                    [-50 + dx, 150 + dy, -50 + dz]
-                ])
-                render();
-            }
+            // document.getElementById('tempIn').oninput = ()=>{
+            //     test.t[0] = parseInt(document.getElementById('tempIn').value);
+            //     console.log(test.t);
+            //     ctx.clearRect(0, 0, cw, ch);
+            //     test.render();
+            // }
 
-            document.getElementById('ySlide').oninput = ()=>{
-                dy = parseInt(document.getElementById('ySlide').value);
-                document.getElementById('yVal').innerHTML = `Y: ${dy}`;
-                tri = cuboidToTri([
-                    [-50 + dx, 50 + dy, 50 + dz],
-                    [50 + dx, 50 + dy, 50 + dz],
-                    [50 + dx, 50 + dy, -50 + dz],
-                    [-50 + dx, 50 + dy, -50 + dz],
-                    [-50 + dx, 150 + dy, 50 + dz],
-                    [50 + dx, 150 + dy, 50 + dz],
-                    [50 + dx, 150 + dy, -50 + dz],
-                    [-50 + dx, 150 + dy, -50 + dz]
-                ])
+            let t = 0;
+            setInterval(()=>{
+                t++;
+                test.r[2] = t;
+                // console.log(test.t);
+                ctx.clearRect(0, 0, cw, ch);
                 render();
-            }
-            
-            document.getElementById('zSlide').oninput = ()=>{
-                dz = parseInt(document.getElementById('zSlide').value);
-                document.getElementById('zVal').innerHTML = `Z: ${dz}`;
-                tri = cuboidToTri([
-                    [-50 + dx, 50 + dy, 50 + dz],
-                    [50 + dx, 50 + dy, 50 + dz],
-                    [50 + dx, 50 + dy, -50 + dz],
-                    [-50 + dx, 50 + dy, -50 + dz],
-                    [-50 + dx, 150 + dy, 50 + dz],
-                    [50 + dx, 150 + dy, 50 + dz],
-                    [50 + dx, 150 + dy, -50 + dz],
-                    [-50 + dx, 150 + dy, -50 + dz]
-                ])
-                render();
-            }
-
-            document.getElementById('fovSlide').oninput = ()=>{
-                // test.r[1] += 10
-                render();
-            }
+            }, 100)
 
             // p0, p1, p2, p3 one face, clockwise, p4 - p1, p5 - p2, p6 - p3, p7 - p4
             // triangles: p0 -> p1 -> p2 -> p0
@@ -257,7 +217,7 @@
             }
             
             function trans4(p, x, y, z) {
-                console.log(x, y, z);
+                // console.log(x, y, z);
                 return mv4([
                     [1, 0, 0, x],
                     [0, 1, 0, y],
@@ -270,11 +230,148 @@
                 return [p[0] * scrY / p[1] * cw / scrX + cw/2, ch/2 - p[2] * scrY / p[1] * ch / scrZ];
             }
 
+            function interpolate(i0, d0, i1, d1) {
+                if (i0 == i1) return [d0];
+
+                let res = [];
+                let m = (d1 - d0)/(i1 - i0);
+                let d = d0;
+                
+                for (let i = i0; i <= i1; i++) {
+                    res.push(d);
+                    d += m;
+                }
+
+                return res;
+            }
+
+            function drawLine(x0, x1, y0, y1) { 
+                let dy = y1 - y0;
+                let dx = x1 - x0;
+                if (x0 == x1 && y0 == y1) {
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(x0, y0, 1, 1);
+                    return;
+                }
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (x0 > x1) {
+                        drawLine(x1, x0, y0, y1);
+                    }
+                    let l = interpolate(x0, y0, x1, y1);
+                    ctx.fillStyle = 'black';
+                    l.forEach((x,i)=>{
+                        ctx.fillRect(Math.round(x0+i), x, 1, 1);
+                    })
+                }
+                else {
+                    if (y0 > y1) {
+                        drawLine(x0, x1, y1, y0);
+                    }
+                    let l = interpolate(y0, x0, y1, x1);
+                    ctx.fillStyle = 'black';
+                    l.forEach((x,i)=>{
+                        ctx.fillRect(x, Math.round(y0 + i), 1, 1);
+                    })
+                }
+            }
+
+            let yBuffer = [];
+            for (let x=0; x<ch; x++) {
+                yBuffer.push([]);
+                for (let y=0; y<cw; y++) {
+                    yBuffer[x].push(0);
+                }
+            }
+
+            function drawTri(p0, p1, p2, color, tri3d) {
+                let p = [p0, p1, p2];
+                let py = [tri3d[0][1], tri3d[1][1], tri3d[2][1]];
+                if (p[0][1] > p[1][1]) {
+                    [p[0],p[1]] = [p[1], p[0]];
+                    [py[0],py[1]] = [py[1], py[0]];
+                }
+                if (p[1][1] > p[2][1]) {
+                    [p[1],p[2]] = [p[2], p[1]];
+                    [py[1],py[2]] = [py[2], py[1]];
+                }
+                if (p[0][1] > p[1][1]) {
+                    [p[0],p[1]] = [p[1], p[0]];
+                    [py[0],py[1]] = [py[1], py[0]];
+                }
+
+                let [a, b, c] = p;
+
+                // console.log(a);
+                // console.log(b);
+                // console.log(c);
+
+                let ab = interpolate(a[1], a[0], b[1], b[0]);
+                let bc = interpolate(b[1], b[0], c[1], c[0]);
+                let ac = interpolate(a[1], a[0], c[1], c[0]);
+
+                let abc = ab.slice(0, -1).concat(bc);
+
+                // console.log(ab);
+                // console.log(ac);
+                // console.log(bc);
+
+                // for (let y = 0; y <= b[1] - a[1]; y++) {
+                //     drawLine(ac[y], ab[y], a[1]+y, a[1]+y);
+                // }
+
+                // for (let y = 0; y <= c[1] - b[1]; y++) {
+                //     drawLine(ac[y+b[1]-a[1]], bc[y], b[1]+y, b[1]+y);
+                // }
+                
+                let left, right;
+                if (ac[3] > abc[3]) {
+                    left = abc;
+                    right = ac;
+                }
+                else {
+                    left = ac;
+                    right = abc;
+                }
+
+                let yab = interpolate(a[1], py[0], b[1], py[1]);
+                let ybc = interpolate(b[1], py[1], c[1], py[2]);
+                let yac = interpolate(a[1], py[0], c[1], py[2]);
+
+                // console.log(yac);
+
+                let yabc = yab.slice(0, -1).concat(ybc);
+
+                // console.log(yabc)
+                
+                ctx.fillStyle = color;
+                for (let y = 0; y <= Math.round(c[1]) - Math.round(a[1]); y++) {
+                    let yL = yac[y];
+                    let yR = yabc[y];
+                    if (ac[y] > abc[y]) {
+                        [yL, yR] = [yR, yL];
+                    }
+
+                    let yHori = interpolate(Math.round(left[y]), 1/yL, Math.round(right[y]), 1/yR);
+                    // console.log(yHori)
+                    for (let x = Math.round(left[y]); x <= Math.round(right[y]); x++) {
+                        if (yHori.length <= x - Math.round(left[y])) continue;
+
+                        if (yHori[x - Math.round(left[y])] > yBuffer[y + Math.round(a[1])][x]) {
+                            ctx.fillRect(x, Math.round(a[1]) + y, 1, 1);
+                            yBuffer[y + Math.round(a[1])][x] = yHori[x - Math.round(left[y])];
+                        }
+                    }
+                    // break;
+                }
+            }
+
             class Cuboid {
-                constructor(s, r, t) {
+                constructor(s, r, t, c) {
                     this.s = s;
                     this.r = r;
                     this.t = t;
+                    this.c = ['red', 'green', 'blue', 'purple', 'cyan', 'orange'];
+                    // 1 - front, 2 - left, 3 - back, 4 - right, 5 - top, 6 - bottom
                 }
                 render() {
                     let p = [
@@ -296,13 +393,13 @@
                         [p[0], p[4], p[7]],
                         [p[7], p[3], p[0]],
 
-                        // right 1562
-                        [p[5], p[1], p[2]],
-                        [p[2], p[6], p[5]],
-
                         // back 4567
                         [p[4], p[5], p[6]],
                         [p[6], p[7], p[4]],
+
+                        // right 1562
+                        [p[5], p[1], p[2]],
+                        [p[2], p[6], p[5]],
 
                         // top 4510
                         [p[5], p[4], p[0]],
@@ -346,91 +443,51 @@
 
                     // console.log(proj);
 
-                    proj.forEach(x=>{
+                    proj.forEach((x, i)=>{
+                        // console.log(x);
                         let tri = [];
                         x.forEach(y=>{
                             tri.push([y[0], y[1]]);
                         })
-                        console.log(tri);
-                        ctx.beginPath();
-                        ctx.strokeStyle = 'black';
-                        ctx.moveTo(tri[0][0], tri[0][1]);
-                        ctx.lineTo(tri[1][0], tri[1][1]);
-                        ctx.lineTo(tri[2][0], tri[2][1]);
-                        ctx.lineTo(tri[0][0], tri[0][1]);
-                        ctx.stroke();
-                        ctx.closePath();
+                        // console.log(tri);
+                        // console.log(camera[i]);
+                        drawTri(tri[0], tri[1], tri[2], this.c[Math.floor(i/2)], camera[i]);
                     })
                 }
             }
 
-            let test = new Cuboid([30, 30, 30], [0, 0, 0], [0, 60, 0]);
+            console.log(Date.now());
+            let test = new Cuboid([30, 30, 30], [0, 0, 30], [15, 60, 0]);
             test.render();
+            console.log(Date.now());
 
             // console.log(depths);
 
             function render() {
-                depths = tri.map(t=>{
-                    let sum = 0;
-                    t.forEach(p => {
-                        sum += Math.hypot(p[0], p[1], p[2]);
-                    })
-                    return [...t, sum/3];
-                })
+                // let toRender = [];
+                // depths.forEach(t=>{
+                //     let a = [t[1][0]-t[0][0], t[1][1]-t[0][1], t[1][2]-t[0][2]];
+                //     let b = [t[2][0]-t[1][0], t[2][1]-t[1][1], t[2][2]-t[1][2]];
 
-                depths.sort((a, b)=>{
-                    return b[3]-a[3];
-                })
-                let toRender = [];
-                depths.forEach(t=>{
-                    let a = [t[1][0]-t[0][0], t[1][1]-t[0][1], t[1][2]-t[0][2]];
-                    let b = [t[2][0]-t[1][0], t[2][1]-t[1][1], t[2][2]-t[1][2]];
+                //     let cross = crossProduct(a, b);
+                //     cross = normalise(cross);
 
-                    let cross = crossProduct(a, b);
-                    cross = normalise(cross);
-
-                    let ref = [-t[0][0], -t[0][1], -t[0][2]];
-                    ref = normalise(ref);
+                //     let ref = [-t[0][0], -t[0][1], -t[0][2]];
+                //     ref = normalise(ref);
                     
-                    if (dotProduct(ref, cross) > 0) {
-                        toRender.push(t);
-                    }
-                })
+                //     if (dotProduct(ref, cross) > 0) {
+                //         toRender.push(t);
+                //     }
+                // })
                 ctx.clearRect(0, 0, cw, ch);
-                // console.log(toRender);
-                toRender.forEach((t, ti)=>{
-                    let proj = [];
-                    // t.forEach((p, i)=>{
-                    //     if (i < 3) {
-                            // console.log(p);
-                            // console.log('-----------------------------------');
-                            // console.log(p[0] * scrY / p[1]);
-                            // console.log((scrX/2 + p[0] * scrY / p[1]) / scrX * cw);
-                            // proj.push([(scrX/2 + p[0] * scrY / p[1]) / scrX * cw, ch - (scrZ/2 + p[2] * scrY / p[1]) / scrZ * ch])
-                            // proj.push([
-                            //     (p[0]/p[1]/Math.tan(fov/180*Math.PI/2)+1) * cw/2,
-                            //     (1 - p[2]/p[1]/Math.tan(fov/180*Math.PI/2)) * ch/2
-                            // ])
-                    //     }
-                    // })
 
+                for (let x=0; x<ch; x++) {
+                    for (let y=0; y<cw; y++) {
+                        yBuffer[y][x] = 0;
+                    }
+                }
 
-                    console.log(c[ti]);
-                    console.log('^^^^^^^^^^^^^^^^^^^^^^^^')
-                    // console.log(proj);
-                    ctx.beginPath();
-                    // ctx.fillStyle = c[Math.floor((ti)/2)]
-                    ctx.fillStyle = c[ti];
-                    // console.log(c[Math.floor((ti)/2)])
-                    ctx.strokeStyle = 'black';
-                    ctx.moveTo(proj[0][0], proj[0][1]);
-                    ctx.lineTo(proj[1][0], proj[1][1]);
-                    ctx.lineTo(proj[2][0], proj[2][1]);
-                    ctx.lineTo(proj[0][0], proj[0][1]);
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.closePath();
-                })
+                test.render();
             }
 
             // render();
@@ -440,36 +497,36 @@
             // rotate(0, 0, -60);
             // render();
 
-            document.body.addEventListener('keydown', e=>{
+            // document.body.addEventListener('keydown', e=>{
                 
-                if (e.key == 'a') {
-                    cam.rz += 10;
-                }
-                else if (e.key == 'd') {
-                    cam.rz -= 10;
-                }
-                else if (e.key == 'w') {
-                    cam.y += 10;
-                }
-                else if (e.key == 's') {
-                    cam.y -= 10;
-                }
-                else if (e.key == 'q') {
-                    cam.x -= 10;
-                }
-                else if (e.key == 'e') {
-                    cam.x += 10;
-                }
-                else if (e.key == 'm') {
-                    test.s[0] += 10;
-                }
-                else if (e.key == 'n') {
-                    test.s[0] -= 10;
-                }
+            //     if (e.key == 'a') {
+            //         cam.rz += 10;
+            //     }
+            //     else if (e.key == 'd') {
+            //         cam.rz -= 10;
+            //     }
+            //     else if (e.key == 'w') {
+            //         cam.y += 10;
+            //     }
+            //     else if (e.key == 's') {
+            //         cam.y -= 10;
+            //     }
+            //     else if (e.key == 'q') {
+            //         cam.x -= 10;
+            //     }
+            //     else if (e.key == 'e') {
+            //         cam.x += 10;
+            //     }
+            //     else if (e.key == 'm') {
+            //         test.s[0] += 10;
+            //     }
+            //     else if (e.key == 'n') {
+            //         test.s[0] -= 10;
+            //     }
 
-                ctx.clearRect(0, 0, cw, ch);
-                test.render();
-            })
+            //     ctx.clearRect(0, 0, cw, ch);
+            //     test.render();
+            // })
         </script>
     </body>
 </html>
