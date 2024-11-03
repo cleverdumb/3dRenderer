@@ -23,8 +23,6 @@
             let scrX = 200;
             let scrZ = 200;
 
-            // let c = ['red', 'green', 'blue', 'black', 'brown', 'purple', 'yellow', 'orange', 'cyan', 'pink']
-
             let dx = 0, dy = 50, dz = 0;
 
             let cam = {
@@ -301,27 +299,11 @@
 
                 let [a, b, c] = p;
 
-                // console.log(a);
-                // console.log(b);
-                // console.log(c);
-
                 let ab = interpolate(a[1], a[0], b[1], b[0]);
                 let bc = interpolate(b[1], b[0], c[1], c[0]);
                 let ac = interpolate(a[1], a[0], c[1], c[0]);
 
                 let abc = ab.slice(0, -1).concat(bc);
-
-                // console.log(ab);
-                // console.log(ac);
-                // console.log(bc);
-
-                // for (let y = 0; y <= b[1] - a[1]; y++) {
-                //     drawLine(ac[y], ab[y], a[1]+y, a[1]+y);
-                // }
-
-                // for (let y = 0; y <= c[1] - b[1]; y++) {
-                //     drawLine(ac[y+b[1]-a[1]], bc[y], b[1]+y, b[1]+y);
-                // }
                 
                 let left, right;
                 if (ac[3] > abc[3]) {
@@ -435,6 +417,17 @@
                         return x.map(y=>rotate4(y, -cam.rx, -cam.ry, -cam.rz));
                     })
 
+                    camera = camera.filter(t=>{
+                        let a = [t[1][0]-t[0][0], t[1][1]-t[0][1], t[1][2]-t[0][2]];
+                        let b = [t[2][0]-t[1][0], t[2][1]-t[1][1], t[2][2]-t[1][2]];
+
+                        let cross = crossProduct(a, b);
+
+                        let ref = [-t[0][0], -t[0][1], -t[0][2]];
+                        
+                        return dotProduct(cross, ref) > 0;
+                    })
+
                     // console.log(camera);
 
                     let proj = camera.map(x=>{
@@ -456,29 +449,14 @@
                 }
             }
 
-            console.log(Date.now());
             let test = new Cuboid([30, 30, 30], [0, 0, 30], [15, 60, 0]);
+            console.log(Date.now());
             test.render();
             console.log(Date.now());
 
             // console.log(depths);
 
             function render() {
-                // let toRender = [];
-                // depths.forEach(t=>{
-                //     let a = [t[1][0]-t[0][0], t[1][1]-t[0][1], t[1][2]-t[0][2]];
-                //     let b = [t[2][0]-t[1][0], t[2][1]-t[1][1], t[2][2]-t[1][2]];
-
-                //     let cross = crossProduct(a, b);
-                //     cross = normalise(cross);
-
-                //     let ref = [-t[0][0], -t[0][1], -t[0][2]];
-                //     ref = normalise(ref);
-                    
-                //     if (dotProduct(ref, cross) > 0) {
-                //         toRender.push(t);
-                //     }
-                // })
                 ctx.clearRect(0, 0, cw, ch);
 
                 for (let x=0; x<ch; x++) {
